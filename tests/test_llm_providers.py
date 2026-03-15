@@ -1,4 +1,4 @@
-"""Tests for Ollama and Bedrock LLM providers."""
+"""Tests for Ollama, Bedrock, and MiniMax LLM providers."""
 
 from __future__ import annotations
 
@@ -14,6 +14,32 @@ class TestOllamaProvider:
             assert provider.model_name == "llama3"
         except ImportError:
             pass  # httpx not available in test env
+
+
+class TestMiniMaxProviderInit:
+    def test_model_name(self) -> None:
+        try:
+            from openqueryagent.llm.minimax import MiniMaxProvider
+            provider = MiniMaxProvider(model="MiniMax-M2.5", api_key="test-key")
+            assert provider.model_name == "MiniMax-M2.5"
+        except ImportError:
+            pass  # openai not available in test env
+
+    def test_default_model(self) -> None:
+        try:
+            from openqueryagent.llm.minimax import MiniMaxProvider
+            provider = MiniMaxProvider(api_key="test-key")
+            assert provider.model_name == "MiniMax-M2.5"
+        except ImportError:
+            pass
+
+    def test_highspeed_model(self) -> None:
+        try:
+            from openqueryagent.llm.minimax import MiniMaxProvider
+            provider = MiniMaxProvider(model="MiniMax-M2.5-highspeed", api_key="test-key")
+            assert provider.model_name == "MiniMax-M2.5-highspeed"
+        except ImportError:
+            pass
 
 
 class TestBedrockProvider:

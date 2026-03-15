@@ -172,6 +172,7 @@ AskResponse { answer, citations, query_plan }
 | ----------- | --------------------------- | --------------------------------------------------- |
 | OpenAI      | `openqueryagent[openai]`    | GPT-4o, JSON mode, streaming, Azure support         |
 | Anthropic   | `openqueryagent[anthropic]` | Claude, JSON extraction, streaming                  |
+| MiniMax     | `openqueryagent[minimax]`   | MiniMax-M2.5 (204K context), JSON mode, streaming   |
 | Ollama      | Built-in                    | Local models (Llama 3, Mistral, Mixtral), streaming |
 | AWS Bedrock | `openqueryagent[bedrock]`   | Claude, Titan, Llama via Bedrock                    |
 

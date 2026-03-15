@@ -208,6 +208,125 @@ class TestAnthropicProvider:
 
 
 # ===========================================================================
+# MiniMax Provider Tests
+# ===========================================================================
+
+
+class TestMiniMaxProvider:
+    def test_model_name(self) -> None:
+        with patch("openai.AsyncOpenAI"):
+            from openqueryagent.llm.minimax import MiniMaxProvider
+
+            provider = MiniMaxProvider(model="MiniMax-M2.5", api_key="test-key")
+            assert provider.model_name == "MiniMax-M2.5"
+
+    def test_default_model(self) -> None:
+        with patch("openai.AsyncOpenAI"):
+            from openqueryagent.llm.minimax import MiniMaxProvider
+
+            provider = MiniMaxProvider(api_key="test-key")
+            assert provider.model_name == "MiniMax-M2.5"
+
+    def test_clamp_temperature_zero(self) -> None:
+        from openqueryagent.llm.minimax import MiniMaxProvider
+
+        assert MiniMaxProvider._clamp_temperature(0.0) == 0.01
+
+    def test_clamp_temperature_negative(self) -> None:
+        from openqueryagent.llm.minimax import MiniMaxProvider
+
+        assert MiniMaxProvider._clamp_temperature(-0.5) == 0.01
+
+    def test_clamp_temperature_above_one(self) -> None:
+        from openqueryagent.llm.minimax import MiniMaxProvider
+
+        assert MiniMaxProvider._clamp_temperature(1.5) == 1.0
+
+    def test_clamp_temperature_valid(self) -> None:
+        from openqueryagent.llm.minimax import MiniMaxProvider
+
+        assert MiniMaxProvider._clamp_temperature(0.7) == 0.7
+
+    @pytest.mark.asyncio
+    async def test_complete(self) -> None:
+        with patch("openai.AsyncOpenAI") as mock_cls:
+            from openqueryagent.llm.minimax import MiniMaxProvider
+
+            mock_client = AsyncMock()
+
+            mock_usage = MagicMock()
+            mock_usage.prompt_tokens = 12
+            mock_usage.completion_tokens = 18
+            mock_usage.total_tokens = 30
+
+            mock_choice = MagicMock()
+            mock_choice.message.content = "Hello from MiniMax!"
+            mock_choice.finish_reason = "stop"
+
+            mock_response = MagicMock()
+            mock_response.choices = [mock_choice]
+            mock_response.model = "MiniMax-M2.5"
+            mock_response.usage = mock_usage
+
+            mock_client.chat.completions.create.return_value = mock_response
+            mock_cls.return_value = mock_client
+
+            provider = MiniMaxProvider(model="MiniMax-M2.5", api_key="test-key")
+            provider._client = mock_client
+
+            result = await provider.complete(
+                messages=[ChatMessage(role="user", content="Hi")],
+            )
+
+            assert isinstance(result, LLMResponse)
+            assert result.content == "Hello from MiniMax!"
+            assert result.model == "MiniMax-M2.5"
+            assert result.usage.total_tokens == 30
+            assert result.finish_reason == "stop"
+
+            # Verify temperature was clamped (0.0 -> 0.01)
+            call_kwargs = mock_client.chat.completions.create.call_args.kwargs
+            assert call_kwargs["temperature"] == 0.01
+
+    @pytest.mark.asyncio
+    async def test_complete_json_format(self) -> None:
+        with patch("openai.AsyncOpenAI") as mock_cls:
+            from openqueryagent.llm.minimax import MiniMaxProvider
+
+            mock_client = AsyncMock()
+
+            mock_usage = MagicMock()
+            mock_usage.prompt_tokens = 10
+            mock_usage.completion_tokens = 20
+            mock_usage.total_tokens = 30
+
+            mock_choice = MagicMock()
+            mock_choice.message.content = '{"answer": "test"}'
+            mock_choice.finish_reason = "stop"
+
+            mock_response = MagicMock()
+            mock_response.choices = [mock_choice]
+            mock_response.model = "MiniMax-M2.5"
+            mock_response.usage = mock_usage
+
+            mock_client.chat.completions.create.return_value = mock_response
+            mock_cls.return_value = mock_client
+
+            provider = MiniMaxProvider(model="MiniMax-M2.5", api_key="test-key")
+            provider._client = mock_client
+
+            result = await provider.complete(
+                messages=[ChatMessage(role="user", content="Return JSON")],
+                response_format=ResponseFormat.JSON,
+            )
+
+            assert result.content == '{"answer": "test"}'
+
+            call_kwargs = mock_client.chat.completions.create.call_args.kwargs
+            assert call_kwargs["response_format"] == {"type": "json_object"}
+
+
+# ===========================================================================
 # JSON Extraction Tests
 # ===========================================================================
 

@@ -56,7 +56,8 @@ class LLMProvider(Protocol):
     """Interface for LLM providers used by planner and synthesizer.
 
     Implementations: OpenAIProvider, AnthropicProvider, OllamaProvider,
-    BedrockProvider. Azure OpenAI uses OpenAIProvider with Azure-specific config.
+    BedrockProvider, MiniMaxProvider. Azure OpenAI uses OpenAIProvider with
+    Azure-specific config.
     """
 
     @property
